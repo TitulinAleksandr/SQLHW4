@@ -18,11 +18,10 @@ GROUP BY a.album_name
 ORDER BY att DESC;
 
 -- 4.все исполнители, которые не выпустили альбомы в 2020 году;
-SELECT singer_name sn FROM singer s 
+SELECT singer_name sn, a.release_date FROM singer s 
 JOIN album_singer als ON s.singer_id = als.singer_id 
 JOIN album a ON als.album_id = a.album_id 
-WHERE a.release_date != 2020
-GROUP BY sn
+WHERE singer_name NOT IN (SELECT singer_name FROM singer WHERE a.release_date = 2020)
 ORDER BY sn;
 
 -- 5.названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
@@ -32,8 +31,7 @@ JOIN track t ON ct.track_id = t.track_id
 JOIN album a ON t.album_id = a.album_id 
 JOIN album_singer als ON a.album_id = als.album_id 
 JOIN singer s ON als.singer_id = s.singer_id 
-WHERE s.singer_name LIKE '%Король и шут%'
-GROUP BY cn;
+WHERE s.singer_name LIKE '%Король и шут%';
 
 -- 6.название альбомов, в которых присутствуют исполнители более 1 жанра;
 SELECT a.album_name FROM album a 
@@ -58,16 +56,18 @@ JOIN track t ON a.album_id = t.album_id
 WHERE t.track_time = (
 	SELECT MIN(track_time)
 	FROM track)
-GROUP BY sn, t.track_time
 ORDER BY t.track_time DESC; 
 
 --9.название альбомов, содержащих наименьшее количество треков.
-SELECT a.album_name FROM album a 
-JOIN track t ON a.album_id = t.album_id 
+SELECT a.album_name, COUNT(*) FROM album a 
+LEFT JOIN track t ON a.album_id = t.album_id 
 GROUP BY a.album_name
-HAVING COUNT(t.track_name) = (
-	SELECT COUNT(t.track_name) FROM track
-	ORDER BY COUNT(t.track_name) LIMIT 1);
+HAVING COUNT(*) = (  
+	SELECT COUNT(*) FROM album a
+	JOIN track t ON a.album_id = t.album_id
+	GROUP BY a.album_name
+	ORDER BY COUNT(*)
+	LIMIT 1);
 
 
 
